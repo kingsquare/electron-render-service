@@ -25,6 +25,9 @@ RUN sed -i 's/main/main contrib/g' /etc/apt/sources.list && \
 
 COPY package.json /app/package.json
 
+# Add extra fonts included within this dist
+COPY fonts/* /usr/share/fonts/truetype/
+
 RUN apt-get update && apt-get install -y nodejs && \
     sed -i '/\"electron\"\:/d' ./package.json && \
     npm install --production --no-optional && \
