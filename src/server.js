@@ -12,7 +12,9 @@ electronApp.commandLine.appendSwitch('disable-gpu');
 
 const WindowPool = require('./window_pool');
 const auth = require('./auth');
-const { printUsage, printBootMessage, handleErrors, setContentDisposition } = require('./util');
+const {
+  printUsage, printBootMessage, handleErrors, setContentDisposition,
+} = require('./util');
 
 const HOSTNAME = process.env.HOSTNAME || '0.0.0.0';
 const PORT = process.env.PORT || 3000;
@@ -34,7 +36,7 @@ app.enable('trust proxy');
 
 app.post(/^\/(pdf|png|jpeg)/, auth, (req, res, next) => {
   const tmpFile = path.join('/tmp/', `${(new Date()).toUTCString()}-${process.pid}-${
-      ((Math.random() * 0x100000000) + 1).toString(36)}.html`);
+    ((Math.random() * 0x100000000) + 1).toString(36)}.html`);
 
   const writeStream = fs.createWriteStream(tmpFile);
   req.pipe(writeStream);
@@ -101,10 +103,12 @@ app.get('/pdf', auth, (req, res) => {
   }
 
   if (!res.locals.tmpFile && !(req.query.url && req.query.url.match(/^https?:\/\/.+$/i))) {
-    res.status(400).send({ input_errors: [{
-      param: 'url',
-      msg: 'Please provide url or send HTML via POST',
-    }] });
+    res.status(400).send({
+      input_errors: [{
+        param: 'url',
+        msg: 'Please provide url or send HTML via POST',
+      }],
+    });
     return;
   }
 
@@ -114,8 +118,10 @@ app.get('/pdf', auth, (req, res) => {
   req.sanitize('removePrintMedia').toBoolean(true);
   req.sanitize('delay').toInt(10);
 
-  const { pageSize = 'A4', marginsType = 0, printBackground = true, landscape = false,
-    removePrintMedia = false, delay = 0, waitForText = false } = req.query;
+  const {
+    pageSize = 'A4', marginsType = 0, printBackground = true, landscape = false,
+    removePrintMedia = false, delay = 0, waitForText = false,
+  } = req.query;
   const url = (res.locals.tmpFile ? `file://${res.locals.tmpFile}` : req.query.url);
 
   req.app.pool.enqueue({
@@ -164,10 +170,11 @@ app.get(/^\/(png|jpeg)/, auth, (req, res) => {
   });
 
   if (!res.locals.tmpFile && !(req.query.url && req.query.url.match(/^https?:\/\/.+$/i))) {
-    res.status(400).send({ input_errors: [{
-      param: 'url',
-      msg: 'Please provide url or send HTML via POST',
-    }],
+    res.status(400).send({
+      input_errors: [{
+        param: 'url',
+        msg: 'Please provide url or send HTML via POST',
+      }],
     });
     return;
   }
@@ -198,8 +205,10 @@ app.get(/^\/(png|jpeg)/, auth, (req, res) => {
     req.sanitize('clippingRect.height').toInt(10);
   }
 
-  const { quality = 80, delay, waitForText, clippingRect,
-    browserWidth = WINDOW_WIDTH, browserHeight = WINDOW_HEIGHT } = req.query;
+  const {
+    quality = 80, delay, waitForText, clippingRect,
+    browserWidth = WINDOW_WIDTH, browserHeight = WINDOW_HEIGHT,
+  } = req.query;
   const url = (res.locals.tmpFile ? `file://${res.locals.tmpFile}` : req.query.url);
 
   req.app.pool.enqueue({

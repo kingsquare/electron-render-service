@@ -3,7 +3,7 @@ FROM buildpack-deps:jessie-curl
 MAINTAINER Mihkel Sokk <mihkelsokk@gmail.com>
 
 ENV RENDERER_ACCESS_KEY=changeme CONCURRENCY=1 WINDOW_WIDTH=1024 WINDOW_HEIGHT=768 NODE_ENV=production \
-    ELECTRON_VERSION=1.6.2 ELECTRON_ENABLE_STACK_DUMPING=true ELECTRON_ENABLE_LOGGING=true
+    ELECTRON_VERSION=1.7.9 ELECTRON_ENABLE_STACK_DUMPING=true ELECTRON_ENABLE_LOGGING=true
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY .fonts.conf /root/.fonts.conf
 
     # Install the packages needed to run Electron
 RUN sed -i 's/main/main contrib/g' /etc/apt/sources.list && \
-    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
+    curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
     apt-get upgrade -y && \
     apt-get install -y unzip xvfb libgtk2.0-0 ttf-mscorefonts-installer libnotify4 libgconf2-4 libxss1 libnss3 dbus-x11 && \
 
@@ -33,4 +33,4 @@ RUN apt-get update && apt-get install -y nodejs && \
 COPY . /app
 
 EXPOSE 3000
-CMD ["sh", "-c", "xvfb-run --server-args=\"-screen 0 ${WINDOW_WIDTH}x${WINDOW_HEIGHT}x24\" ./electron --disable-gpu src/server.js"]
+CMD ["sh", "-c", "[ -e /tmp/.X99-lock ] && rm /tmp/.X99-lock; xvfb-run -e /dev/stdout --server-args=\"-screen 0 ${WINDOW_WIDTH}x${WINDOW_HEIGHT}x24\" ./electron --disable-gpu src/server.js"]
