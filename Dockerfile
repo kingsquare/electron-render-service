@@ -20,6 +20,44 @@ RUN sed -i 's/main/main contrib/g' /etc/apt/sources.list && \
     wget "https://github.com/atom/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip" -O electron.zip && \
     unzip electron.zip && rm electron.zip && \
     \
+    apt-get install -y \
+        #
+        # symbolic font providing emoji characters
+        #fonts-symbola # from stretch unicode v7.0 # ttf-ancient-fonts in jessie (unicode v6.0)  \
+        #
+        #  "Noto" is short for "No Tofu", describing the aim of covering all living Unicode scripts (currently 43 are covered, at least partly, across hinted and unhinted).
+        fonts-noto \
+        #
+        # "AR PL UMing" Chinese Unicode TrueType font collection Mingti style
+        fonts-arphic-uming \
+        #
+        # "WenQuanYi Zen Hei" A Hei-Ti Style (sans-serif) Chinese font
+        fonts-wqy-zenhei \
+        #
+        # Japanese OpenType font set, IPA Mincho and IPA P Mincho Fonts
+        fonts-ipafont-mincho \
+        #
+        # Japanese OpenType font set, IPA Gothic and IPA P Gothic Fonts
+        fonts-ipafont-gothic \
+        #
+        # VL Gothic is beautiful Japanese free Gothic TrueType font, developed by Project Vine.
+        fonts-vlgothic \
+        #
+        # Un series Korean TrueType fonts
+        fonts-unfonts-core \
+        #
+        # TrueType and Type1 Hebrew Fonts for X11: Those families provide a basic set of a serif (Frank Ruehl), sans serif (Nachlieli) and monospaced (Miriam Mono) fonts. Also included Miriam, Drugulin, Aharoni, David, Hadasim etc. Cantillation marks support is available in Keter YG.
+        #fonts-culmus \ # from stretch # culmus in jessie
+        culmus \
+        #
+        # TrueType Arabic fonts released by the King Abdulaziz City for Science and Technology (KACST)
+        fonts-kacst \
+        #
+        # Unicode Fonts for Ancient Scripts; Egyptian Hieroglyphs, Sumero-Akkadian Cuneiform, and Musical Symbols in the Unicode Standard
+        #fonts-ancient-scripts # from stretch
+        #ttf-ancient-fonts # in jessie
+        ttf-ancient-fonts \
+        && \
     # Cleanup
     apt-get remove -y unzip && apt-get clean && rm -rf /var/lib/apt/lists/*
 

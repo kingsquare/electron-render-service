@@ -5,6 +5,9 @@
   "bin": {
     "electron-render-service": "./bin/electron-render-service.js"
   },
+  "engine": {
+    "node": "^8"
+  },
   "scripts": {
     "start": "electron src/server.js",
     "lint": "eslint src",
