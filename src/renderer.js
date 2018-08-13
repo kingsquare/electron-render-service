@@ -58,7 +58,9 @@ function renderPDF(options, done) {
 /**
  * Render image png/jpeg
  */
-function renderImage({ type, quality, browserWidth, browserHeight, clippingRect }, done) {
+function renderImage({
+  type, quality, browserWidth, browserHeight, clippingRect,
+}, done) {
   const handleCapture = image => done(null, type === 'png' ? image.toPng() : image.toJpeg(quality));
 
   if (clippingRect) {
@@ -152,6 +154,7 @@ exports.createWindow = function createWindow() {
       blinkFeatures: 'OverlayScrollbars', // Slimmer scrollbars
       allowDisplayingInsecureContent: true, // Show http content on https site
       allowRunningInsecureContent: true, // Run JS, CSS from http urls
+      nodeIntegration: false, // Disable exposing of Node.js symbols to DOM
     },
   });
 

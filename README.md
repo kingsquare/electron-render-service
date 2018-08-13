@@ -20,6 +20,7 @@ Based on official [Debian Jessie](https://hub.docker.com/_/debian/) image, uses 
 
 > NB: Set bigger shared memory size `--shm-size=Xm` (default: `64m`) if dealing with very heavy pages.
 
+> Docker Swarm needs extra configuration to work - [`--shm-size` is not implemented](https://github.com/moby/moby/issues/26714) use `--mount type=tmpfs,dst=/dev/shm,tmpfs-size=134217728 ` instead and blank hostname `-e HOSTNAME=`.
 
 
 ## Installation on Debian with Node.js
@@ -45,7 +46,7 @@ wget -O out.pdf 'http://localhost:3000/pdf?accessKey=secret&url=https%3A%2F%2Fgi
 
 #### `GET /pdf` - Render PDF
 
-*Query params ([About PDF params](https://github.com/atom/electron/blob/master/docs/api/web-contents.md#webcontentsprinttopdfoptions-callback)):*
+*Query params ([About PDF params](https://github.com/electron/electron/blob/master/docs/api/web-contents.md#contentsprinttopdfoptions-callback)):*
 
   * `accessKey` - Authentication key.
   * `url` - Full URL to fetch.
@@ -101,6 +102,7 @@ Identical as above, omit `url` and provide HTML in request body.
 * `WINDOW_HEIGHT` - Default window height (default: `768`)
 * `HOSTNAME` - Hostname to accept Express connections on (default: `0.0.0.0`)
 * `PORT` - (default: `3000`)
+* `CHROMIUM_CLI_SWITCHES` - Comma separated list of Chromium command line switches to append. For example pass `ignore-certificate-errors` as value to render self-signed pages (at your own risk).
 
 
 ## Delayed Rendering
