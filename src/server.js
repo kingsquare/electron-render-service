@@ -26,6 +26,11 @@ const electronApp = electron.app;
 electronApp.commandLine.appendSwitch("no-sandbox");
 electronApp.commandLine.appendSwitch("disable-http-cache");
 electronApp.commandLine.appendSwitch("disable-gpu");
+electronApp.commandLine.appendSwitch("js-flags", "--max-old-space-size=1024");
+
+console.log("appData", electronApp.getPath("appData"));
+console.log("userData", electronApp.getPath("userData"));
+console.log("cache", electronApp.getPath("cache"));
 
 const cliSwitchEnv = process.env.CHROMIUM_CLI_SWITCHES;
 (cliSwitchEnv ? cliSwitchEnv.split(",") : []).map(electronApp.commandLine.appendSwitch);
@@ -143,6 +148,8 @@ app.get(
     } = req.query;
     const url = res.locals.tmpFile ? `file://${res.locals.tmpFile}` : req.query.url;
 
+    // console.log("DOINT IT", process.memoryUsage());
+    // console.log("enqueue", electronApp.getAppMetrics());
     req.app.pool.enqueue(
       {
         type: "pdf",

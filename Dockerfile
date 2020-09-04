@@ -101,9 +101,6 @@ EXPOSE 3000
 # The default Xvfb display
 ENV DISPLAY :99
 
-# as the inline fonts should not change much put them before the app
-#COPY fonts/* /usr/share/fonts/truetype/
-
 ADD package.json /app/package.json
 ADD yarn.lock /app/yarn.lock
 

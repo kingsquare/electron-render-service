@@ -11,7 +11,7 @@
     "node": "^14"
   },
   "scripts": {
-    "start": "DEBUG=\"app,app:*\" pm2 start --no-daemon /app/bin/start.sh",
+    "start": "DEBUG=\"app,app:*\" pm2 start --no-daemon --max-memory-restart=256M /app/bin/start.sh",
     "dev": "electron src/server.js",
     "lint": "eslint '**/*.{js,jsx,ts,tsx}'",
     "test": "electron node_modules/.bin/_mocha --exit"
