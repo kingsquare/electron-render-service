@@ -5,8 +5,25 @@ const { check, validationResult, sanitize } = require("express-validator");
 const path = require("path");
 const fs = require("fs");
 
-const electronApp = require("electron").app;
+const electron = require("electron");
 
+if (process.env.SENTRY_DSN) {
+  const Sentry = require("@sentry/electron");
+  Sentry.init({ dsn: process.env.SENTRY_DSN });
+}
+
+if (process.env.ELECTRON_CRASHREPORTER_SUBMIT_URL) {
+  electron.crashReporter.start({
+    companyName: process.env.ELECTRON_CRASHREPORTER_COMPANY || "My Company",
+    productName: process.env.ELECTRON_CRASHREPORTER_PRODUCT || "My Product",
+    ignoreSystemCrashHandler: true,
+    submitURL: process.env.ELECTRON_CRASHREPORTER_SUBMIT_URL,
+    compress: true,
+  });
+}
+
+const electronApp = electron.app;
+electronApp.commandLine.appendSwitch("no-sandbox");
 electronApp.commandLine.appendSwitch("disable-http-cache");
 electronApp.commandLine.appendSwitch("disable-gpu");
 
