@@ -1,7 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const responseTime = require('response-time');
-const { check, validationResult } = require('express-validator');
+const { check, validationResult, sanitize } = require('express-validator');
 const path = require('path');
 const fs = require('fs');
 
@@ -71,32 +71,24 @@ app.post(/^\/(pdf|png|jpeg)/, auth, (req, res, next) => {
  *
  * See more at https://git.io/vwDaJ
  */
-app.get('/pdf', auth,[
+app.get('/pdf', auth, [
   // Specify page size of the generated PDF
   check('pageSize').optional(true).matches(/A3|A4|A5|Legal|Letter|Tabloid|[0-9]+x[0-9]+/),
   // Specify the type of margins to use
-  check('marginsType').optional(true).isInt().isIn([[0, 1, 2]]),
-],  (req, res) => {
-  // req.check({
-  //   printBackground: { // Whether to print CSS backgrounds.
-  //     optional: true, isBoolean: true,
-  //   },
-  //   landscape: { // true for landscape, false for portrait.
-  //     optional: true, isBoolean: true,
-  //   },
-  //   removePrintMedia: { // Removes any <link media="print"> stylesheets on page before render.
-  //     optional: true, isBoolean: true,
-  //   },
-  //   delay: { // Specify how long to wait before generating the PDF
-  //     optional: true, isInt: true,
-  //   },
-  //   waitForText: { // Specify a specific string of text to find before generating the PDF
-  //     optional: true, notEmpty: true,
-  //   },
-  // });
-
+  check('marginsType').optional(true).isInt().isIn([0, 1, 2]).toInt(10),
+  // Whether to print CSS backgrounds.
+  check('printBackground').optional(true).isBoolean().toBoolean(true),
+  // true for landscape, false for portrait.
+  check('landscape').optional(true).isBoolean().toBoolean(true),
+  // Removes any <link media="print"> stylesheets on page before render.
+  check('removePrintMedia').optional(true).isBoolean().toBoolean(true),
+  // Specify how long to wait before generating the PDF
+  check('delay').optional(true).isInt().toInt(10),
+  // Specify a specific string of text to find before generating the PDF
+  check('waitForText').optional(true).notEmpty(),
+], (req, res) => {
   const errors = validationResult(req);
-  if (errors) {
+  if (errors && errors.length) {
     res.status(400).send({ input_errors: errors });
     return;
   }
@@ -110,12 +102,6 @@ app.get('/pdf', auth,[
     });
     return;
   }
-
-  req.sanitize('marginsType').toInt(10);
-  req.sanitize('printBackground').toBoolean(true);
-  req.sanitize('landscape').toBoolean(true);
-  req.sanitize('removePrintMedia').toBoolean(true);
-  req.sanitize('delay').toInt(10);
 
   const {
     pageSize = 'A4', marginsType = 0, printBackground = true, landscape = false,
@@ -144,29 +130,42 @@ app.get('/pdf', auth,[
   });
 });
 
-
 /**
  * GET /png|jpeg - Render png or jpeg
  */
-app.get(/^\/(png|jpeg)/, auth, (req, res) => {
-  const type = req.params[0];
-  req.check({
-    quality: { // JPEG quality
-      optional: true, isInt: true,
-    },
-    browserWidth: { // Browser window width
-      optional: true, isInt: true,
-    },
-    browserHeight: { // Browser window height
-      optional: true, isInt: true,
-    },
-    delay: { // Specify how long to wait before generating the PDF
-      optional: true, isInt: true,
-    },
-    waitForText: { // Specify a specific string of text to find before generating the PDF
-      optional: true, notEmpty: true,
-    },
-  });
+app.get(/^\/(png|jpeg)/, auth, [
+  // JPEG quality
+  check('quality').optional(true).isInt().toInt(),
+  // Browser window width
+  check('browserWidth').optional(true).isInt().toInt(),
+  // Browser window height
+  check('browserHeight').optional(true).isInt().toInt(),
+  // Specify how long to wait before generating the PDF
+  check('delay').optional(true).isInt(),
+  // Specify a specific string of text to find before generating the PDF
+  check('waitForText').optional(true).notEmpty(),
+], (req, res) => {
+  // if (req.query.clippingRect) {
+  //   req.check({
+  //     'clippingRect.x': { isInt: { errorMessage: 'Invalid value' } },
+  //     'clippingRect.y': { isInt: { errorMessage: 'Invalid value' } },
+  //     'clippingRect.width': { isInt: { errorMessage: 'Invalid value' } },
+  //     'clippingRect.height': { isInt: { errorMessage: 'Invalid value' } },
+  //   });
+  // }
+  //
+  // if (req.query.clippingRect) {
+  //   req.sanitize('clippingRect.x').toInt(10);
+  //   req.sanitize('clippingRect.y').toInt(10);
+  //   req.sanitize('clippingRect.width').toInt(10);
+  //   req.sanitize('clippingRect.height').toInt(10);
+  // }
+  const errors = validationResult(req);
+  if (errors && errors.length) {
+    res.status(400).send({ input_errors: errors });
+    return;
+  }
+  const type = req.params[ 0 ];
 
   if (!res.locals.tmpFile && !(req.query.url && req.query.url.match(/^https?:\/\/.+$/i))) {
     res.status(400).send({
@@ -176,32 +175,6 @@ app.get(/^\/(png|jpeg)/, auth, (req, res) => {
       }],
     });
     return;
-  }
-
-  if (req.query.clippingRect) {
-    req.check({
-      'clippingRect.x': { isInt: { errorMessage: 'Invalid value' } },
-      'clippingRect.y': { isInt: { errorMessage: 'Invalid value' } },
-      'clippingRect.width': { isInt: { errorMessage: 'Invalid value' } },
-      'clippingRect.height': { isInt: { errorMessage: 'Invalid value' } },
-    });
-  }
-
-  const validationResult = req.validationErrors();
-  if (validationResult) {
-    res.status(400).send({ input_errors: validationResult });
-    return;
-  }
-
-  req.sanitize('quality').toInt(10);
-  req.sanitize('browserWidth').toInt(10);
-  req.sanitize('browserHeight').toInt(10);
-
-  if (req.query.clippingRect) {
-    req.sanitize('clippingRect.x').toInt(10);
-    req.sanitize('clippingRect.y').toInt(10);
-    req.sanitize('clippingRect.width').toInt(10);
-    req.sanitize('clippingRect.height').toInt(10);
   }
 
   const {
@@ -230,7 +203,6 @@ app.get(/^\/(png|jpeg)/, auth, (req, res) => {
   });
 });
 
-
 /**
  * GET /stats - Output some stats as JSON
  */
@@ -239,12 +211,10 @@ app.get('/stats', auth, (req, res) => {
   return res.send(req.app.pool.stats());
 });
 
-
 /**
  * GET / - Print usage
  */
 app.get('/', (req, res) => res.send(printUsage()));
-
 
 // Electron finished booting
 electronApp.once('ready', () => {
@@ -252,7 +222,6 @@ electronApp.once('ready', () => {
   app.pool = new WindowPool();
   const listener = app.listen(PORT, HOSTNAME, () => printBootMessage(listener));
 });
-
 
 // Stop Electron on SIG*
 process.on('exit', code => electronApp.exit(code));

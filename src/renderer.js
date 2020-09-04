@@ -42,13 +42,15 @@ function renderPDF(options, done) {
       done(new Error('Render failed'));
       return;
     }
-    this.webContents.printToPDF(options, (err, data) => {
+    this.webContents.printToPDF(options).then((data) => {
       if (data.slice(150).compare(pdfFailedFixture.slice(150)) === 0) { // Slice out ModDate
         console.log('Pdf empty, creation failed! Retrying...');
         setTimeout(attemptRender, 50);
         return;
       }
-      done(err, data);
+      done(undefined, data);
+    }).catch((err) => {
+      done(err);
     });
   };
 
@@ -155,6 +157,7 @@ exports.createWindow = function createWindow() {
       allowDisplayingInsecureContent: true, // Show http content on https site
       allowRunningInsecureContent: true, // Run JS, CSS from http urls
       nodeIntegration: false, // Disable exposing of Node.js symbols to DOM
+      webSecurity: false
     },
   });
 
