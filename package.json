@@ -48,5 +48,8 @@
         "version": "latest"
       }
     }
+  },
+  "prettier": {
+    "printWidth": 120
   }
 }

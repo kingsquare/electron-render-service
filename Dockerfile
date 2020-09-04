@@ -89,7 +89,8 @@ RUN \
         nodejs \
         yarn
 
-RUN apt-get install -y fonts-ancient-scripts fonts-symbola libgbm1 libasound2
+RUN apt-get install -y libgbm1 libasound2
+RUN apt-get install -y fonts-symbola fonts-ancient-scripts
 
 RUN apt-get remove -y unzip && \
     apt-get clean && \

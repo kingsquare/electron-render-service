@@ -1,22 +1,22 @@
 /* eslint-disable no-console */
-const pjson = require('../package.json');
-const { BrowserWindow } = require('electron');
-const retry = require('retry');
-const path = require('path');
-const fs = require('fs');
+const pjson = require("../package.json");
+const { BrowserWindow } = require("electron");
+const retry = require("retry");
+const path = require("path");
+const fs = require("fs");
 
-const { validateResult, RendererError } = require('./error_handler');
+const { validateResult, RendererError } = require("./error_handler");
 
 const TIMEOUT = parseInt(process.env.TIMEOUT, 10) || 30;
-const DEVELOPMENT = process.env.NODE_ENV === 'development';
+const DEVELOPMENT = process.env.NODE_ENV === "development";
 const WINDOW_WIDTH = parseInt(process.env.WINDOW_WIDTH, 10) || 1024;
 const WINDOW_HEIGHT = parseInt(process.env.WINDOW_HEIGHT, 10) || 768;
-const DEFAULT_HEADERS = 'Cache-Control: no-cache, no-store, must-revalidate\nPragma: no-cache';
+const DEFAULT_HEADERS = "Cache-Control: no-cache, no-store, must-revalidate\nPragma: no-cache";
 
 /**
  * Render PDF
  */
-const pdfFailedFixture = fs.readFileSync(path.resolve(__dirname, './fixtures/render_failed.pdf'));
+const pdfFailedFixture = fs.readFileSync(path.resolve(__dirname, "./fixtures/render_failed.pdf"));
 
 function renderPDF(options, done) {
   // Remove print stylesheets prior rendering
@@ -29,7 +29,8 @@ function renderPDF(options, done) {
   // Support setting page size in microns with NxN syntax
   const customPage = options.pageSize.match(/([0-9]+)x([0-9]+)/);
   if (customPage) {
-    options.pageSize = { // eslint-disable-line no-param-reassign
+    options.pageSize = {
+      // eslint-disable-line no-param-reassign
       width: parseInt(customPage[1], 10),
       height: parseInt(customPage[2], 10),
     };
@@ -39,19 +40,23 @@ function renderPDF(options, done) {
   const attemptRender = () => {
     tries += 1;
     if (tries > 5) {
-      done(new Error('Render failed'));
+      done(new Error("Render failed"));
       return;
     }
-    this.webContents.printToPDF(options).then((data) => {
-      if (data.slice(150).compare(pdfFailedFixture.slice(150)) === 0) { // Slice out ModDate
-        console.log('Pdf empty, creation failed! Retrying...');
-        setTimeout(attemptRender, 50);
-        return;
-      }
-      done(undefined, data);
-    }).catch((err) => {
-      done(err);
-    });
+    this.webContents
+      .printToPDF(options)
+      .then((data) => {
+        if (data.slice(150).compare(pdfFailedFixture.slice(150)) === 0) {
+          // Slice out ModDate
+          console.log("Pdf empty, creation failed! Retrying...");
+          setTimeout(attemptRender, 50);
+          return;
+        }
+        done(undefined, data);
+      })
+      .catch((err) => {
+        done(err);
+      });
   };
 
   attemptRender();
@@ -60,10 +65,8 @@ function renderPDF(options, done) {
 /**
  * Render image png/jpeg
  */
-function renderImage({
-  type, quality, browserWidth, browserHeight, clippingRect,
-}, done) {
-  const handleCapture = image => done(null, type === 'png' ? image.toPng() : image.toJpeg(quality));
+function renderImage({ type, quality, browserWidth, browserHeight, clippingRect }, done) {
+  const handleCapture = (image) => done(null, type === "png" ? image.toPng() : image.toJpeg(quality));
 
   if (clippingRect) {
     // Avoid stretching by adding rect coordinates to size
@@ -82,7 +85,7 @@ exports.renderWorker = function renderWorker(window, task, done) {
   const { webContents } = window;
   let waitOperation = null;
 
-  const timeoutTimer = setTimeout(() => webContents.emit('timeout'), TIMEOUT * 1000);
+  const timeoutTimer = setTimeout(() => webContents.emit("timeout"), TIMEOUT * 1000);
 
   if (task.waitForText !== false) {
     waitOperation = retry.operation({
@@ -93,43 +96,43 @@ exports.renderWorker = function renderWorker(window, task, done) {
     });
   }
 
-  webContents.once('finished', (type, ...args) => {
+  webContents.once("finished", (type, ...args) => {
     clearTimeout(timeoutTimer);
 
     function renderIt() {
       validateResult(task.url, type, ...args)
         // Page loaded successfully
-        .then(() => (task.type === 'pdf' ? renderPDF : renderImage).call(window, task, done))
-        .catch(ex => done(ex));
+        .then(() => (task.type === "pdf" ? renderPDF : renderImage).call(window, task, done))
+        .catch((ex) => done(ex));
     }
 
-    if (type !== 'did-finish-load') {
+    if (type !== "did-finish-load") {
       renderIt();
 
-    // Delay rendering n seconds
+      // Delay rendering n seconds
     } else if (task.delay > 0) {
-      console.log('delaying pdf generation by %sms', task.delay * 1000);
+      console.log("delaying pdf generation by %sms", task.delay * 1000);
       setTimeout(renderIt, task.delay * 1000);
 
-    // Look for specific string before rendering
+      // Look for specific string before rendering
     } else if (task.waitForText) {
       console.log('delaying pdf generation, waiting for text "%s" to appear', task.waitForText);
       waitOperation.attempt(() => {
-        webContents.findInPage(''); // TODO: Workaround for https://crbug.com/670498
+        webContents.findInPage(""); // TODO: Workaround for https://crbug.com/670498
         webContents.findInPage(task.waitForText);
       });
 
-      webContents.on('found-in-page', function foundInPage(event, result) {
+      webContents.on("found-in-page", function foundInPage(event, result) {
         if (result.matches === 0) {
-          const isRetrying = waitOperation.retry(new Error('not ready to render'));
+          const isRetrying = waitOperation.retry(new Error("not ready to render"));
 
           if (!isRetrying) {
-            done(new RendererError('TEXT_NOT_FOUND', `Failed to find text: ${task.waitForText}`, 404));
-            webContents.removeListener('found-in-page', foundInPage);
+            done(new RendererError("TEXT_NOT_FOUND", `Failed to find text: ${task.waitForText}`, 404));
+            webContents.removeListener("found-in-page", foundInPage);
           }
         } else if (result.finalUpdate) {
-          webContents.stopFindInPage('clearSelection');
-          webContents.removeListener('found-in-page', foundInPage);
+          webContents.stopFindInPage("clearSelection");
+          webContents.removeListener("found-in-page", foundInPage);
           renderIt();
         }
       });
@@ -153,11 +156,10 @@ exports.createWindow = function createWindow() {
     transparent: true,
     enableLargerThanScreen: true,
     webPreferences: {
-      blinkFeatures: 'OverlayScrollbars', // Slimmer scrollbars
+      blinkFeatures: "OverlayScrollbars", // Slimmer scrollbars
       allowDisplayingInsecureContent: true, // Show http content on https site
       allowRunningInsecureContent: true, // Run JS, CSS from http urls
       nodeIntegration: false, // Disable exposing of Node.js symbols to DOM
-      webSecurity: false
     },
   });
 
@@ -166,8 +168,8 @@ exports.createWindow = function createWindow() {
   webContents.setUserAgent(`${webContents.getUserAgent()} ${pjson.name}/${pjson.version}`);
 
   // Emit end events to an aggregate for worker to listen on once
-  ['did-fail-load', 'crashed', 'did-finish-load', 'timeout'].forEach((e) => {
-    webContents.on(e, (...args) => webContents.emit('finished', e, ...args));
+  ["did-fail-load", "crashed", "did-finish-load", "timeout"].forEach((e) => {
+    webContents.on(e, (...args) => webContents.emit("finished", e, ...args));
   });
 
   return window;

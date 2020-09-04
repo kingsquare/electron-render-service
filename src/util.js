@@ -1,4 +1,4 @@
-function printUsage(type = '[pdf|png|jpeg]', url = '') {
+function printUsage(type = "[pdf|png|jpeg]", url = "") {
   return `Usage: GET ${url}/${type}?accessKey=[token]&url=http%3A%2F%2Fgoogle.com`;
 }
 exports.printUsage = printUsage;
@@ -19,7 +19,7 @@ exports.handleErrors = function handleErrors(err, req, res) {
   res.status(err.statusCode || 500).send({
     error: {
       code: err.code,
-      message: err.message || 'Internal Server Error',
+      message: err.message || "Internal Server Error",
     },
   });
 
@@ -32,5 +32,5 @@ exports.handleErrors = function handleErrors(err, req, res) {
  * Set Content-Disposition
  */
 exports.setContentDisposition = function setContentDisposition(res, ext) {
-  res.set('Content-Disposition', `inline; filename="render-${Date.now()}.${ext}"`);
+  res.set("Content-Disposition", `inline; filename="render-${Date.now()}.${ext}"`);
 };
