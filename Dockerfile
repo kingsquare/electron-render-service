@@ -1,25 +1,43 @@
-FROM buildpack-deps:jessie-curl
+FROM buildpack-deps:buster-curl
 
-MAINTAINER Mihkel Sokk <mihkelsokk@gmail.com>
+LABEL maintainer="Kingsquare <docker@kingsquare.nl>"
+ENV TZ "Europe/Amsterdam"
 
-ENV RENDERER_ACCESS_KEY=changeme CONCURRENCY=1 WINDOW_WIDTH=1024 WINDOW_HEIGHT=768 NODE_ENV=production \
-    ELECTRON_VERSION=1.7.12 ELECTRON_ENABLE_STACK_DUMPING=true ELECTRON_ENABLE_LOGGING=true
+ENV RENDERER_ACCESS_KEY=changeme \
+    CONCURRENCY=1 \
+    WINDOW_WIDTH=1024 \
+    WINDOW_HEIGHT=768 \
+    NODE_ENV=production \
+    NODE_VERSION=14 \
+    ELECTRON_VERSION=10.1.1 \
+    ELECTRON_ENABLE_STACK_DUMPING=true \
+    ELECTRON_ENABLE_LOGGING=true
 
 WORKDIR /app
 
 # Add subpixel hinting
 COPY .fonts.conf /root/.fonts.conf
 
-    # Install the packages needed to run Electron
+# Install the packages needed to run Electron
 RUN sed -i 's/main/main contrib/g' /etc/apt/sources.list && \
-    curl -sL https://deb.nodesource.com/setup_8.x | bash - && \
     apt-get upgrade -y && \
-    apt-get install -y unzip xvfb libgtk2.0-0 ttf-mscorefonts-installer libnotify4 libgconf2-4 libxss1 libnss3 dbus-x11 && \
-    \
-    # Get Electron
-    wget "https://github.com/atom/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip" -O electron.zip && \
-    unzip electron.zip && rm electron.zip && \
-    \
+    apt-get update -y
+
+RUN \
+    apt-get install -y \
+        unzip \
+        xvfb \
+        libgtk2.0-0 \
+		libfontconfig1 \
+		ttf-ancient-fonts \
+        ttf-mscorefonts-installer \
+        libnotify4 \
+        libgconf-2-4 \
+        libxss1 \
+        libnss3 \
+        dbus-x11
+
+RUN \
     apt-get install -y \
         #
         # symbolic font providing emoji characters
@@ -56,22 +74,40 @@ RUN sed -i 's/main/main contrib/g' /etc/apt/sources.list && \
         # Unicode Fonts for Ancient Scripts; Egyptian Hieroglyphs, Sumero-Akkadian Cuneiform, and Musical Symbols in the Unicode Standard
         #fonts-ancient-scripts # from stretch
         #ttf-ancient-fonts # in jessie
-        ttf-ancient-fonts \
-        && \
-    # Cleanup
-    apt-get remove -y unzip && apt-get clean && rm -rf /var/lib/apt/lists/*
+        ttf-ancient-fonts
 
-# as the inline fonts should not change much put them before the app
-COPY fonts/* /usr/share/fonts/truetype/
+RUN \
+    wget "https://github.com/atom/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip" -O electron.zip && \
+    unzip electron.zip && rm electron.zip
 
-COPY package.json /app/package.json
+RUN \
+    curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && \
+    apt-get install -y \
+        nodejs \
+        yarn
 
-RUN apt-get update && apt-get install -y nodejs && \
-    sed -i '/\"electron\"\:/d' ./package.json && \
-    npm install --production --no-optional && \
-    apt-get remove -y nodejs && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get install -y fonts-ancient-scripts fonts-symbola libgbm1 libasound2
 
-COPY . /app
+RUN apt-get remove -y unzip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 EXPOSE 3000
-CMD ["sh", "-c", "[ -e /tmp/.X99-lock ] && rm /tmp/.X99-lock; xvfb-run -e /dev/stdout --server-args=\"-screen 0 ${WINDOW_WIDTH}x${WINDOW_HEIGHT}x24\" ./electron --disable-gpu src/server.js"]
+
+# The default Xvfb display
+ENV DISPLAY :99
+
+# as the inline fonts should not change much put them before the app
+#COPY fonts/* /usr/share/fonts/truetype/
+
+ADD package.json /app/package.json
+ADD yarn.lock /app/yarn.lock
+
+RUN yarn --production
+
+ADD . /app
+
+CMD ["yarn", "start"]

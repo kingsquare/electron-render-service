@@ -1,7 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const responseTime = require('response-time');
-const expressValidator = require('express-validator');
+const { check, validationResult } = require('express-validator');
 const path = require('path');
 const fs = require('fs');
 
@@ -27,7 +27,7 @@ const WINDOW_HEIGHT = parseInt(process.env.WINDOW_HEIGHT, 10) || 768;
 const app = express();
 
 app.use(responseTime());
-app.use(expressValidator());
+// app.use(expressValidator());
 
 // Log with token
 morgan.token('key-label', req => req.keyLabel);
@@ -71,37 +71,33 @@ app.post(/^\/(pdf|png|jpeg)/, auth, (req, res, next) => {
  *
  * See more at https://git.io/vwDaJ
  */
-app.get('/pdf', auth, (req, res) => {
-  req.check({
-    pageSize: { // Specify page size of the generated PDF
-      optional: true,
-      matches: {
-        options: [/A3|A4|A5|Legal|Letter|Tabloid|[0-9]+x[0-9]+/],
-      },
-    },
-    marginsType: { // Specify the type of margins to use
-      optional: true, isInt: true, isIn: { options: [[0, 1, 2]] },
-    },
-    printBackground: { // Whether to print CSS backgrounds.
-      optional: true, isBoolean: true,
-    },
-    landscape: { // true for landscape, false for portrait.
-      optional: true, isBoolean: true,
-    },
-    removePrintMedia: { // Removes any <link media="print"> stylesheets on page before render.
-      optional: true, isBoolean: true,
-    },
-    delay: { // Specify how long to wait before generating the PDF
-      optional: true, isInt: true,
-    },
-    waitForText: { // Specify a specific string of text to find before generating the PDF
-      optional: true, notEmpty: true,
-    },
-  });
+app.get('/pdf', auth,[
+  // Specify page size of the generated PDF
+  check('pageSize').optional(true).matches(/A3|A4|A5|Legal|Letter|Tabloid|[0-9]+x[0-9]+/),
+  // Specify the type of margins to use
+  check('marginsType').optional(true).isInt().isIn([[0, 1, 2]]),
+],  (req, res) => {
+  // req.check({
+  //   printBackground: { // Whether to print CSS backgrounds.
+  //     optional: true, isBoolean: true,
+  //   },
+  //   landscape: { // true for landscape, false for portrait.
+  //     optional: true, isBoolean: true,
+  //   },
+  //   removePrintMedia: { // Removes any <link media="print"> stylesheets on page before render.
+  //     optional: true, isBoolean: true,
+  //   },
+  //   delay: { // Specify how long to wait before generating the PDF
+  //     optional: true, isInt: true,
+  //   },
+  //   waitForText: { // Specify a specific string of text to find before generating the PDF
+  //     optional: true, notEmpty: true,
+  //   },
+  // });
 
-  const validationResult = req.validationErrors();
-  if (validationResult) {
-    res.status(400).send({ input_errors: validationResult });
+  const errors = validationResult(req);
+  if (errors) {
+    res.status(400).send({ input_errors: errors });
     return;
   }
 

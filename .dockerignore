@@ -4,6 +4,6 @@
 .eslintrc
 npm-debug.log
 
-bin/
+bin/run-in-docker.sh
 test/
 node_modules/
