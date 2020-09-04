@@ -35,13 +35,14 @@ RUN \
         libgconf-2-4 \
         libxss1 \
         libnss3 \
-        dbus-x11
+        libgbm1 \
+        libasound2
 
 RUN \
     apt-get install -y \
         #
         # symbolic font providing emoji characters
-        #fonts-symbola # from stretch unicode v7.0 # ttf-ancient-fonts in jessie (unicode v6.0)  \
+        fonts-symbola \
         #
         #  "Noto" is short for "No Tofu", describing the aim of covering all living Unicode scripts (currently 43 are covered, at least partly, across hinted and unhinted).
         fonts-noto \
@@ -72,9 +73,8 @@ RUN \
         fonts-kacst \
         #
         # Unicode Fonts for Ancient Scripts; Egyptian Hieroglyphs, Sumero-Akkadian Cuneiform, and Musical Symbols in the Unicode Standard
-        #fonts-ancient-scripts # from stretch
+        fonts-ancient-scripts
         #ttf-ancient-fonts # in jessie
-        ttf-ancient-fonts
 
 RUN \
     wget "https://github.com/atom/electron/releases/download/v${ELECTRON_VERSION}/electron-v${ELECTRON_VERSION}-linux-x64.zip" -O electron.zip && \
@@ -89,8 +89,8 @@ RUN \
         nodejs \
         yarn
 
-RUN apt-get install -y libgbm1 libasound2
-RUN apt-get install -y fonts-symbola fonts-ancient-scripts
+# Better Emoji support (Unicode 12 from Ubuntu 20.04)
+COPY fonts/noto/NotoColorEmoji.ttf /usr/share/fonts/truetype/noto/
 
 RUN apt-get remove -y unzip && \
     apt-get clean && \
