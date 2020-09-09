@@ -148,8 +148,6 @@ app.get(
     } = req.query;
     const url = res.locals.tmpFile ? `file://${res.locals.tmpFile}` : req.query.url;
 
-    // console.log("DOINT IT", process.memoryUsage());
-    // console.log("enqueue", electronApp.getAppMetrics());
     req.app.pool.enqueue(
       {
         type: "pdf",

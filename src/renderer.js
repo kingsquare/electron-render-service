@@ -98,8 +98,6 @@ exports.renderWorker = function renderWorker(window, task, done) {
   }
 
   webContents.once("finished", (type, ...args) => {
-    console.log("webContents", "finished --- trying render");
-
     clearTimeout(timeoutTimer);
 
     function renderIt() {
