@@ -67,16 +67,19 @@ function renderPDF(options, done) {
  * Render image png/jpeg
  */
 function renderImage({ type, quality, browserWidth, browserHeight, clippingRect }, done) {
-  const handleCapture = (image) => done(null, type === "png" ? image.toPng() : image.toJpeg(quality));
-
   if (clippingRect) {
     // Avoid stretching by adding rect coordinates to size
     this.setSize(browserWidth + clippingRect.x, browserHeight + clippingRect.y);
-    setTimeout(() => this.capturePage(clippingRect, handleCapture), 50);
   } else {
     this.setSize(browserWidth, browserHeight);
-    setTimeout(() => this.capturePage(handleCapture), 50);
   }
+  setTimeout(
+    () =>
+      this.capturePage(clippingRect)
+        .then((image) => done(null, type === "png" ? image.toPNG() : image.toJPEG(quality)))
+        .catch((ex) => done(ex)),
+    50
+  );
 }
 
 /**
